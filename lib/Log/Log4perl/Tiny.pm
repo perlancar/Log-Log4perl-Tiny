@@ -275,6 +275,20 @@ sub emit_log {
    return;
 } ## end sub emit_log
 
+sub format_message {
+   my $self = shift;
+
+   my $level = shift;
+
+   my %data_for = (
+      level   => $level,
+      message => \@_,
+      (exists($self->{loglocal}) ? (loglocal => $self->{loglocal}) : ()),
+   );
+   sprintf $self->{format},
+     map { $format_for{$_->[0]}[1]->(\%data_for, @$_); } @{$self->{args}};
+} ## end sub format_message
+
 sub log {
    my $self = shift;
    return if $self->{level} == $DEAD;
@@ -282,13 +296,7 @@ sub log {
    my $level = shift;
    return if $level > $self->{level};
 
-   my %data_for = (
-      level   => $level,
-      message => \@_,
-      (exists($self->{loglocal}) ? (loglocal => $self->{loglocal}) : ()),
-   );
-   my $message = sprintf $self->{format},
-     map { $format_for{$_->[0]}[1]->(\%data_for, @$_); } @{$self->{args}};
+   my $message = $self->format_message($level, @_);
 
    return $self->emit_log($message);
 } ## end sub log
